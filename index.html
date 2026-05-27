@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f97316" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResQ — Report an Issue</title>
+  <meta name="description" content="Anonymously report hostel issues and track their resolution in real time." />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-logo">Res<span>Q</span></span>
+      <span class="nav-badge">Beta</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"     class="nav-link active">Report</a>
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="admin.html"     class="nav-link">Admin</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    </div>
+  </nav>
+
+  <!-- ===== PAGE ===== -->
+  <div class="page">
+    <div class="page-header">
+      <h1 class="page-title">Report an Issue</h1>
+      <p class="page-subtitle">All reports are anonymous. Your student ID is auto-generated and never linked to your identity.</p>
+    </div>
+
+    <div class="grid-2" style="align-items: start; gap: 28px;">
+
+      <!-- LEFT: Report Form -->
+      <div class="card" style="position: sticky; top: 84px;">
+        <p class="card-title">New Report</p>
+
+        <form id="reportForm" novalidate>
+
+          <div class="form-group">
+            <label class="form-label" for="issueTitle">
+              Issue Title <span class="form-required">*</span>
+            </label>
+            <input
+              type="text"
+              id="issueTitle"
+              class="form-input"
+              placeholder="e.g. Water leaking in bathroom block C"
+              maxlength="100"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="issueCategory">
+              Category <span class="form-required">*</span>
+            </label>
+            <select id="issueCategory" class="form-select" required>
+              <option value="" disabled selected>Select a category</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              Severity <span class="form-required">*</span>
+            </label>
+            <div class="severity-group">
+              <label>
+                <input type="radio" name="severity" value="Low" class="severity-option" id="sevLow" />
+                <span class="severity-label low" style="display:block; text-align:center; padding:9px 12px; border-radius:var(--radius); border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; transition:var(--transition); color:var(--text-2);">🟢 Low</span>
+              </label>
+              <label>
+                <input type="radio" name="severity" value="Medium" class="severity-option" id="sevMed" />
+                <span class="severity-label med" style="display:block; text-align:center; padding:9px 12px; border-radius:var(--radius); border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; transition:var(--transition); color:var(--text-2);">🟡 Medium</span>
+              </label>
+              <label>
+                <input type="radio" name="severity" value="High" class="severity-option" id="sevHigh" />
+                <span class="severity-label high" style="display:block; text-align:center; padding:9px 12px; border-radius:var(--radius); border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; transition:var(--transition); color:var(--text-2);">🔴 High</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="issueDesc">
+              Description <span class="form-required">*</span>
+            </label>
+            <textarea
+              id="issueDesc"
+              class="form-textarea"
+              placeholder="Describe the issue in detail — location, when it started, how many students are affected..."
+              maxlength="500"
+              required
+            ></textarea>
+            <span style="font-size:11px; color:var(--text-3);" id="charCount">0 / 500</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Photo (optional)</label>
+            <div class="upload-area" id="uploadArea">
+              <div class="upload-icon">📷</div>
+              <div>Click to upload a photo</div>
+              <div style="font-size:11px; margin-top:4px; color:var(--text-3);">JPG, PNG up to 5MB</div>
+              <input type="file" id="photoInput" accept="image/*" style="display:none;" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">
+            Submit Report
+          </button>
+
+        </form>
+      </div>
+
+      <!-- RIGHT: Issue Feed -->
+      <div>
+        <!-- Filter bar -->
+        <div class="filter-bar">
+          <input type="text" class="filter-search" id="searchInput" placeholder="🔍  Search issues..." />
+          <button class="filter-btn active" data-filter="All">All</button>
+          <button class="filter-btn" data-filter="Pending">Pending</button>
+          <button class="filter-btn" data-filter="In Progress">In Progress</button>
+          <button class="filter-btn" data-filter="Resolved">Resolved</button>
+        </div>
+
+        <!-- Sort row -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <span style="font-size:13px; color:var(--text-3);" id="issueCount">Loading...</span>
+          <select class="form-select" id="sortSelect" style="width:auto; padding:6px 32px 6px 10px; font-size:12px;">
+            <option value="newest">Newest First</option>
+            <option value="upvotes">Most Upvoted</option>
+            <option value="severity">Highest Severity</option>
+          </select>
+        </div>
+
+        <!-- Issue list -->
+        <div class="issue-list" id="issueList">
+          <div class="empty-state">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <!-- Load more -->
+        <div style="text-align:center; margin-top:20px;">
+          <button class="btn btn-ghost" id="loadMoreBtn" style="display:none;">Load More</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== SUCCESS MODAL ===== -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal" style="text-align:center; max-width:400px;">
+      <div style="font-size:48px; margin-bottom:16px;">✅</div>
+      <h2 class="modal-title" style="margin-bottom:8px;">Report Submitted!</h2>
+      <p style="font-size:14px; color:var(--text-2); margin-bottom:20px;">
+        Your issue has been reported anonymously. You can track its status in the feed below.
+      </p>
+      <button class="btn btn-primary btn-full" id="successClose">Got it</button>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="report.js"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+</script>
+</body>
+</html>
