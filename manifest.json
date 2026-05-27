@@ -1,0 +1,22 @@
+{
+  "name": "ResQ — Hostel Issue Reporter",
+  "short_name": "ResQ",
+  "description": "Anonymously report and track hostel issues in real time.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f1a",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
